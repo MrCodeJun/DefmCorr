@@ -168,7 +168,7 @@ class DeformNet():
             self.shape_loss = self.shape_loss(self.points, self.points_deform_transpose, dense_weight, k_n=8)
             self.lap_loss = self.laplacian_loss(self.temp_points, self.points_deform)
             self.move_loss = self.local_map_loss(self.temp_points, self.points_deform)
-            self.shape_loss = self.shape_loss + 0.2*self.move_loss + 0.05 * self.lap_loss
+            self.shape_loss = self.shape_loss + 0.1*self.move_loss + 0.01 * self.lap_loss
 
         else:
             self.shape_loss = self.shape_loss(self.points_t, self.points_deform, dense_weight, k_n=8)
