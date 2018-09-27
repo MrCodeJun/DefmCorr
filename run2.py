@@ -17,7 +17,7 @@ import pointfly as pf
 # Default Parameters Setting
 parser = argparse.ArgumentParser()
 parser.add_argument("--densityWeight", type=float, default=1.0, help="density weight [default: 1.0]")
-parser.add_argument('--gpu', type=int, default=1, help='GPU to use [default: GPU 0]')
+parser.add_argument('--gpu', type=int, default=0, help='GPU to use [default: GPU 0]')
 parser.add_argument('--model', default='deform_net2', help='Model name: deform_net [default: deform_net]')
 parser.add_argument('--log', default='log_deform_v1.0', help='Log dir [default: log]')
 parser.add_argument('--point_num', type=int, default=2048, help='Do not set the argument')
