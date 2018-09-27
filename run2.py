@@ -5,19 +5,21 @@ import argparse
 import importlib
 import numpy as np
 import h5py
-import pointfly as pf
 from mayavi import mlab
-import sample_points as sp
 
 BASE_DIR = os.path.dirname(__file__)
+sys.path.append(BASE_DIR)
 sys.path.append(os.path.join(BASE_DIR, 'Models'))
+
+import sample_points as sp
+import pointfly as pf
 
 # Default Parameters Setting
 parser = argparse.ArgumentParser()
 parser.add_argument("--densityWeight", type=float, default=1.0, help="density weight [default: 1.0]")
 parser.add_argument('--gpu', type=int, default=1, help='GPU to use [default: GPU 0]')
 parser.add_argument('--model', default='deform_net2', help='Model name: deform_net [default: deform_net]')
-parser.add_argument('--log', default='log_deform_with_density_lap_0.05_map0.2', help='Log dir [default: log]')
+parser.add_argument('--log', default='log_deform_v1.0', help='Log dir [default: log]')
 parser.add_argument('--point_num', type=int, default=2048, help='Do not set the argument')
 parser.add_argument('--batch_size', type=int, default=16, help='Batch Size during training [default: 16]')
 parser.add_argument('--epoch', type=int, default=200, help='Epoch to run  [default: 200]')
@@ -26,7 +28,7 @@ parser.add_argument('--momentum', type=float, default=0.9, help='Initial learnin
 parser.add_argument('--optimizer', default='adam', help='adam or momentum [default: adam]')
 parser.add_argument('--decay_rate', type=float, default=0.7, help='Decay rate for lr decay [default: 0.8]')
 parser.add_argument('--decay_step', type=int, default=50000, help='Decay step for lr decay [default: 50000]')
-parser.add_argument('--train_data', default='/home/junz/Github/Data/benchmark_v0_deform',
+parser.add_argument('--train_data', default='../../Data/benchmark_v0_deform',
                     help= 'Training data dir [default: ../Data]')
 parser.add_argument('--is_visual', default='True', help='Visualize the data [defaul: False]')
 
@@ -51,7 +53,7 @@ IS_KEY = 'False'
 
 
 MODEL = importlib.import_module(FLAGS.model)  # import network module
-LOG_DIR = os.path.join('/home/junz/Github/Deform-Corrs-1.0/Logs', LOG_DIR)
+LOG_DIR = os.path.join('../Logs', LOG_DIR)
 if not os.path.exists(LOG_DIR):
     os.mkdir(LOG_DIR)
 os.system('cp %s %s' % ('Models/'+FLAGS.model+'.py', LOG_DIR))
