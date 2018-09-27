@@ -351,12 +351,19 @@ class DeformNet():
 
 
     def fake_local_seg_loss(self, pred_seg_labels, deform_points, input_points, seg_labels):
+        batch_size = deform_points.get_shape()[0].value
+        point_num = deform_points.get_shape()[1].value
         # train the generation net,  we hope that the closest points between
         # the input and deform shape has the similar labels
         square_dist = pairwise_l2_norm2_batch(deform_points, input_points)
         dist = tf.sqrt(square_dist)
         mask = tf.argmin(dist, -1)
-        nn_labels = seg_labels[mask]
+        index = tf.tile(tf.expand_dims(tf.range(batch_size, dtype=tf.int64), -1), [1, point_num])
+        index = tf.expand_dims(index, -1)
+        mask = tf.expand_dims(mask, -1)
+
+        mask = tf.concat([index, mask], axis=-1)
+        nn_labels = tf.gather_nd(seg_labels, mask)
         loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=pred_seg_labels, labels=nn_labels),
                               axis=1)
         classify_loss = tf.reduce_mean(loss)
