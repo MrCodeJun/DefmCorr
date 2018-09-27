@@ -336,7 +336,7 @@ class DeformNet():
         nn_cosin_matrix= 1 - tf.matmul(nn_directions,nn_directions, transpose_b=True)
         nn_cosin_matrix = tf.reshape(nn_cosin_matrix, shape=[batch_size, points_num, K*K])
         loss = tf.reduce_mean(nn_cosin_matrix, axis = [0, 1, 2])
-        loss = loss + 0.2*tf.reduce_mean(dists,axis = [0,1,2])
+        loss = loss + 0.2*tf.reduce_mean(dists,axis = [0,1])
 
         return loss
 
