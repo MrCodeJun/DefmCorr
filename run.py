@@ -268,11 +268,11 @@ def train_one_epoch(sess, ops, train_writer, is_step2):
 
         if (IS_SHOW == 'True') & ((total_seen/BATCH_SIZE+1) % 5000000 == 1):
             mlab.figure('real_seg', fgcolor=(0, 0, 0), bgcolor=(1, 1, 1))
-            mlab.points3d(10 * Data[0, :, 0], 10 * Data[0, :, 1], 10 * Data[0, :, 2], real_seg[0, :],
+            mlab.points3d(10 * Data[0, :, 0], 10 * Data[0, :, 1], 10 * Data[0, :, 2], real_seg_labels[0, :],
                           scale_factor=0.2, scale_mode='vector')
             mlab.figure('fake_seg', fgcolor=(0, 0, 0), bgcolor=(1, 1, 1))
-            mlab.points3d(10 * morhp_shapes[0, :, 0], 10 * morhp_shapes[0, :, 1], 10 * morhp_shapes[0, :, 2], fake_seg[0, :],
-                          scale_factor=0.2, scale_mode='vector')
+            mlab.points3d(10 * morhp_shapes[0, :, 0], 10 * morhp_shapes[0, :, 1], 10 * morhp_shapes[0, :, 2],
+                          fake_seg_labels[0, :], scale_factor=0.2, scale_mode='vector')
             mlab.show()
             mlab.figure('morph_shape', fgcolor=(0, 0, 0), bgcolor=(1, 1, 1))
             mlab.points3d(10 * morhp_shapes[0, :, 0], 10 * morhp_shapes[0, :, 1], 10 * morhp_shapes[0, :, 2], color=(0.7, 0.7, 0.7),
