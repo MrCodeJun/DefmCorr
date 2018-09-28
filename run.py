@@ -15,11 +15,11 @@ sys.path.append(os.path.join(BASE_DIR, 'Models'))
 # Default Parameters Setting
 parser = argparse.ArgumentParser()
 parser.add_argument("--densityWeight", type=float, default=1.0, help="density weight [default: 1.0]")
-parser.add_argument('--gpu', type=int, default=0, help='GPU to use [default: GPU 0]')
+parser.add_argument('--gpu', type=int, default=1, help='GPU to use [default: GPU 0]')
 parser.add_argument('--model', default='deform_net_with_seg', help='Model name: deform_net [default: deform_net]')
 parser.add_argument('--log', default='log_deform_with_seg', help='Log dir [default: log]')
 parser.add_argument('--point_num', type=int, default=2048, help='Do not set the argument')
-parser.add_argument('--batch_size', type=int, default=8, help='Batch Size during training [default: 16]')
+parser.add_argument('--batch_size', type=int, default=24, help='Batch Size during training [default: 16]')
 parser.add_argument('--epoch', type=int, default=200, help='Epoch to run  [default: 200]')
 parser.add_argument('--learning_rate', type=float, default=0.001, help='Initial learning rate [default: 0.001]')
 parser.add_argument('--momentum', type=float, default=0.9, help='Initial learning rate [default: 0.9]')
@@ -177,7 +177,7 @@ def train():
         # saver.restore(sess, os.path.join(LOG_DIR, "model15.ckpt"))
         is_step2 = IS_STEP2
         for epoch in range(MAX_EPOCH):
-            if epoch >= 15:
+            if epoch >= 10:
                 is_step2 = 'True'
             log_string('**** EPOCH %03d ****' % (epoch))
             train_one_epoch(sess, ops, train_writer, is_step2, batch)
