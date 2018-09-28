@@ -15,7 +15,7 @@ sys.path.append(os.path.join(BASE_DIR, 'Models'))
 # Default Parameters Setting
 parser = argparse.ArgumentParser()
 parser.add_argument("--densityWeight", type=float, default=1.0, help="density weight [default: 1.0]")
-parser.add_argument('--gpu', type=int, default=1, help='GPU to use [default: GPU 0]')
+parser.add_argument('--gpu', type=int, default=0, help='GPU to use [default: GPU 0]')
 parser.add_argument('--model', default='deform_net_with_seg', help='Model name: deform_net [default: deform_net]')
 parser.add_argument('--log', default='log_deform_with_seg', help='Log dir [default: log]')
 parser.add_argument('--point_num', type=int, default=2048, help='Do not set the argument')
@@ -150,7 +150,7 @@ def train():
                'template_shape_labels': network.temp_point_labels,
                'morph_shapes': network.points_deform,
                'pred_category': network.category_pred,
-               'real_pred_seg': network.real_seg_preds,
+               'real_seg_preds': network.real_seg_preds,
                'real_seg_loss': network.real_seg_loss,
                'fake_seg_preds': network.fake_seg_preds,
                'fake_seg_loss': network.fake_seg_loss,
@@ -175,15 +175,17 @@ def train():
 
         saver.save(sess, os.path.join(LOG_DIR, "model_init.ckpt"))
         # saver.restore(sess, os.path.join(LOG_DIR, "model15.ckpt"))
-
+        is_step2 = IS_STEP2
         for epoch in range(MAX_EPOCH):
+            if epoch > 30:
+                is_step2 = 'True'
             log_string('**** EPOCH %03d ****' % (epoch))
-            train_one_epoch(sess, ops, train_writer)
+            train_one_epoch(sess, ops, train_writer, is_step2)
             if (epoch+1) % 5 == 0:
                 saver.save(sess, os.path.join(LOG_DIR, "model" + str(epoch + 1) + ".ckpt"))
 
 
-def train_one_epoch(sess, ops, train_writer):
+def train_one_epoch(sess, ops, train_writer, is_step2):
     total_seen = 0
     loss_sum = 0
     shape_list = sp.get_file_list(DATA_DIR, '.h5')
@@ -239,7 +241,8 @@ def train_one_epoch(sess, ops, train_writer):
                      ops['template_shapes']: Temp,
                      ops['is_training_pl']: 'True'
                      }
-        if IS_STEP2 == 'False':
+
+        if is_step2 == 'False':
             summary, step, _, loss_val, morhp_shapes, real_seg, fake_seg = sess.run([ops['merged'],
                                                             ops['step'],
                                                             ops['train_op1'],
@@ -248,10 +251,9 @@ def train_one_epoch(sess, ops, train_writer):
                                                             ops['real_seg_preds'],
                                                             ops['fake_seg_preds']],
                                                             feed_dict=feed_dict)
-            if loss_val < 0.1:
-                IS_STEP2 = 'True'
 
-        else:
+        if is_step2 == 'True':
+
             summary, step, _, loss_val, morhp_shapes, real_seg, fake_seg= sess.run([ops['merged'],
                                                             ops['step'],
                                                             ops['train_op2'],
@@ -261,6 +263,8 @@ def train_one_epoch(sess, ops, train_writer):
                                                             ops['fake_seg_preds']],
                                                             feed_dict=feed_dict)
 
+        real_seg_labels = np.argmax(real_seg, axis=-1)
+        fake_seg_labels = np.argmax(fake_seg, axis=-1)
 
         if (IS_SHOW == 'True') & ((total_seen/BATCH_SIZE+1) % 5000000 == 1):
             mlab.figure('real_seg', fgcolor=(0, 0, 0), bgcolor=(1, 1, 1))
