@@ -180,16 +180,15 @@ def train():
             if epoch > 30:
                 is_step2 = 'True'
             log_string('**** EPOCH %03d ****' % (epoch))
-            train_one_epoch(sess, ops, train_writer, is_step2)
+            train_one_epoch(sess, ops, train_writer, is_step2, batch)
             if (epoch+1) % 5 == 0:
                 saver.save(sess, os.path.join(LOG_DIR, "model" + str(epoch + 1) + ".ckpt"))
 
 
-def train_one_epoch(sess, ops, train_writer, is_step2):
+def train_one_epoch(sess, ops, train_writer, is_step2, batch):
     total_seen = 0
     loss_sum = 0
     shape_list = sp.get_file_list(DATA_DIR, '.h5')
-
     # Shuffle train files
     train_file_ids = np.arange(0, len(shape_list))
     np.random.shuffle(train_file_ids)
@@ -222,8 +221,9 @@ def train_one_epoch(sess, ops, train_writer, is_step2):
 
         rotated_data = pf.rotate_point_cloud(Data)
         jittered_data = pf.jitter_point_cloud(rotated_data)
+        batch_val = sess.run(batch)
 
-        if (IS_SHOW == 'True') & ((total_seen/BATCH_SIZE+1) % 5000000 == 1):
+        if (IS_SHOW == 'True') & ((batch_val+1) % 5000000 == 1):
             mlab.figure('points', fgcolor=(0, 0, 0), bgcolor=(1, 1, 1))
             mlab.points3d(10 * Data[0, :, 0], 10 * Data[0, :, 1], 10 * Data[0, :, 2], Seg_Label[0, :],
                           scale_factor=0.2, scale_mode='vector')
@@ -266,7 +266,7 @@ def train_one_epoch(sess, ops, train_writer, is_step2):
         real_seg_labels = np.argmax(real_seg, axis=-1)
         fake_seg_labels = np.argmax(fake_seg, axis=-1)
 
-        if (IS_SHOW == 'True') & ((total_seen/BATCH_SIZE+1) % 5000000 == 1):
+        if (IS_SHOW == 'True') & ((batch_val+1) % 5000000 == 1):
             mlab.figure('real_seg', fgcolor=(0, 0, 0), bgcolor=(1, 1, 1))
             mlab.points3d(10 * Data[0, :, 0], 10 * Data[0, :, 1], 10 * Data[0, :, 2], real_seg_labels[0, :],
                           scale_factor=0.2, scale_mode='vector')
