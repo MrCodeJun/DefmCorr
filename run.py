@@ -177,7 +177,7 @@ def train():
         # saver.restore(sess, os.path.join(LOG_DIR, "model15.ckpt"))
         is_step2 = IS_STEP2
         for epoch in range(MAX_EPOCH):
-            if epoch > 30:
+            if epoch >= 15:
                 is_step2 = 'True'
             log_string('**** EPOCH %03d ****' % (epoch))
             train_one_epoch(sess, ops, train_writer, is_step2, batch)
@@ -223,7 +223,7 @@ def train_one_epoch(sess, ops, train_writer, is_step2, batch):
         jittered_data = pf.jitter_point_cloud(rotated_data)
         batch_val = sess.run(batch)
 
-        if (IS_SHOW == 'True') & ((batch_val+1) % 50000 == 1):
+        if (IS_SHOW == 'True') & ((batch_val+1) % 5000 == 1):
             mlab.figure('points', fgcolor=(0, 0, 0), bgcolor=(1, 1, 1))
             mlab.points3d(10 * Data[0, :, 0], 10 * Data[0, :, 1], 10 * Data[0, :, 2], Seg_Label[0, :],
                           scale_factor=0.2, scale_mode='vector')
@@ -264,9 +264,11 @@ def train_one_epoch(sess, ops, train_writer, is_step2, batch):
                                                             feed_dict=feed_dict)
 
         real_seg_labels = np.argmax(real_seg, axis=-1)
+
+
         fake_seg_labels = np.argmax(fake_seg, axis=-1)
 
-        if (IS_SHOW == 'True') & ((batch_val+1) % 50000 == 1):
+        if (IS_SHOW == 'True') & ((batch_val+1) % 5000 == 1):
             mlab.figure('real_seg', fgcolor=(0, 0, 0), bgcolor=(1, 1, 1))
             mlab.points3d(10 * Data[0, :, 0], 10 * Data[0, :, 1], 10 * Data[0, :, 2], real_seg_labels[0, :],
                           scale_factor=0.2, scale_mode='vector')
