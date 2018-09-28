@@ -48,7 +48,7 @@ IS_SHOW = FLAGS.is_visual
 
 IS_TRANS = 'q_trans'
 IS_KEY = 'False'
-loss_val = 200
+IS_STEP2 = 'False'
 
 MODEL = importlib.import_module(FLAGS.model)  # import network module
 LOG_DIR = os.path.join('../Logs', LOG_DIR)
@@ -239,7 +239,7 @@ def train_one_epoch(sess, ops, train_writer):
                      ops['template_shapes']: Temp,
                      ops['is_training_pl']: 'True'
                      }
-        if loss_val>0.1:
+        if IS_STEP2 == 'False':
             summary, step, _, loss_val, morhp_shapes, real_seg, fake_seg = sess.run([ops['merged'],
                                                             ops['step'],
                                                             ops['train_op1'],
@@ -248,6 +248,9 @@ def train_one_epoch(sess, ops, train_writer):
                                                             ops['real_seg_preds'],
                                                             ops['fake_seg_preds']],
                                                             feed_dict=feed_dict)
+            if loss_val < 0.1:
+                IS_STEP2 = 'True'
+
         else:
             summary, step, _, loss_val, morhp_shapes, real_seg, fake_seg= sess.run([ops['merged'],
                                                             ops['step'],
