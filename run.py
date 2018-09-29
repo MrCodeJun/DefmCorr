@@ -15,9 +15,9 @@ sys.path.append(os.path.join(BASE_DIR, 'Models'))
 # Default Parameters Setting
 parser = argparse.ArgumentParser()
 parser.add_argument("--densityWeight", type=float, default=1.0, help="density weight [default: 1.0]")
-parser.add_argument('--gpu', type=int, default=1, help='GPU to use [default: GPU 0]')
+parser.add_argument('--gpu', type=int, default=0, help='GPU to use [default: GPU 0]')
 parser.add_argument('--model', default='deform_net_with_seg', help='Model name: deform_net [default: deform_net]')
-parser.add_argument('--log', default='log_deform_with_seg', help='Log dir [default: log]')
+parser.add_argument('--log', default='log_deform_with_seg2', help='Log dir [default: log]')
 parser.add_argument('--point_num', type=int, default=2048, help='Do not set the argument')
 parser.add_argument('--batch_size', type=int, default=16, help='Batch Size during training [default: 16]')
 parser.add_argument('--epoch', type=int, default=200, help='Epoch to run  [default: 200]')
@@ -114,11 +114,9 @@ def train():
                 optimizer = tf.train.MomentumOptimizer(learning_rate, momentum=MOMENTUM)
             elif OPTIMIZER =='adam':
                 optimizer = tf.train.AdamOptimizer(learning_rate)
-
             extra_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
             with tf.control_dependencies(extra_update_ops):
-                train_op1 = optimizer.minimize(total_loss + reg_loss, global_step=batch)
-                train_op2 = optimizer.minimize(total_loss + 0.5*fake_seg_loss+reg_loss, global_step=batch)
+                train_op = optimizer.minimize(total_loss + reg_loss+0.5*fake_seg_loss, global_step=batch)
 
             # Add ops to save and restore all the variables.
             saver = tf.train.Saver()
@@ -157,8 +155,7 @@ def train():
                'total_loss': total_loss,
                'shape_loss': network.shape_loss,
                'category_loss': network.category_loss,
-               'train_op1': train_op1,
-               'train_op2': train_op2,
+               'train_op': train_op,
                'extra_update_ops': extra_update_ops,
                'merged': merged_train,
                'step': batch,
@@ -175,17 +172,15 @@ def train():
 
         saver.save(sess, os.path.join(LOG_DIR, "model_init.ckpt"))
         # saver.restore(sess, os.path.join(LOG_DIR, "model15.ckpt"))
-        is_step2 = IS_STEP2
         for epoch in range(MAX_EPOCH):
-            if epoch >= 10:
-                is_step2 = 'True'
+
             log_string('**** EPOCH %03d ****' % (epoch))
-            train_one_epoch(sess, ops, train_writer, is_step2, batch)
+            train_one_epoch(sess, ops, train_writer, batch)
             if (epoch+1) % 5 == 0:
                 saver.save(sess, os.path.join(LOG_DIR, "model" + str(epoch + 1) + ".ckpt"))
 
 
-def train_one_epoch(sess, ops, train_writer, is_step2, batch):
+def train_one_epoch(sess, ops, train_writer, batch):
     total_seen = 0
     loss_sum = 0
     shape_list = sp.get_file_list(DATA_DIR, '.h5')
@@ -242,30 +237,17 @@ def train_one_epoch(sess, ops, train_writer, is_step2, batch):
                      ops['is_training_pl']: 'True'
                      }
 
-        if is_step2 == 'False':
-            summary, step, _, loss_val, morhp_shapes, real_seg, fake_seg = sess.run([ops['merged'],
-                                                            ops['step'],
-                                                            ops['train_op1'],
-                                                            ops['total_loss'],
-                                                            ops['morph_shapes'],
-                                                            ops['real_seg_preds'],
-                                                            ops['fake_seg_preds']],
-                                                            feed_dict=feed_dict)
+        summary, step, _, loss_val, morhp_shapes, real_seg, fake_seg = sess.run([ops['merged'],
+                                                        ops['step'],
+                                                        ops['train_op'],
+                                                        ops['total_loss'],
+                                                        ops['morph_shapes'],
+                                                        ops['real_seg_preds'],
+                                                        ops['fake_seg_preds']],
+                                                        feed_dict=feed_dict)
 
-        if is_step2 == 'True':
-
-            summary, step, _, loss_val, morhp_shapes, real_seg, fake_seg= sess.run([ops['merged'],
-                                                            ops['step'],
-                                                            ops['train_op2'],
-                                                            ops['total_loss'],
-                                                            ops['morph_shapes'],
-                                                            ops['real_seg_preds'],
-                                                            ops['fake_seg_preds']],
-                                                            feed_dict=feed_dict)
 
         real_seg_labels = np.argmax(real_seg, axis=-1)
-
-
         fake_seg_labels = np.argmax(fake_seg, axis=-1)
 
         if (IS_SHOW == 'True') & ((batch_val+1) % 5000 == 1):
