@@ -15,7 +15,7 @@ sys.path.append(os.path.join(BASE_DIR, 'Models'))
 # Default Parameters Setting
 parser = argparse.ArgumentParser()
 parser.add_argument("--densityWeight", type=float, default=1.0, help="density weight [default: 1.0]")
-parser.add_argument('--gpu', type=int, default=0, help='GPU to use [default: GPU 0]')
+parser.add_argument('--gpu', type=int, default=1, help='GPU to use [default: GPU 0]')
 parser.add_argument('--model', default='deform_net_with_seg', help='Model name: deform_net [default: deform_net]')
 parser.add_argument('--log', default='log_deform_with_seg2', help='Log dir [default: log]')
 parser.add_argument('--point_num', type=int, default=2048, help='Do not set the argument')
@@ -98,7 +98,7 @@ def train():
                 shape_loss = network.shape_loss
                 seg_loss = network.real_seg_loss
                 fake_seg_loss = network.fake_seg_loss
-                total_loss = 0.4*shape_loss + 0.3*category_loss + 0.3*seg_loss
+                total_loss = 0.6*shape_loss + 0.2*category_loss + 0.2*seg_loss
 
             reg_loss = 0.00001*tf.losses.get_regularization_loss()
 
@@ -116,7 +116,7 @@ def train():
                 optimizer = tf.train.AdamOptimizer(learning_rate)
             extra_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
             with tf.control_dependencies(extra_update_ops):
-                train_op = optimizer.minimize(total_loss + reg_loss+0.5*fake_seg_loss, global_step=batch)
+                train_op = optimizer.minimize(total_loss + reg_loss+0.1*fake_seg_loss, global_step=batch)
 
             # Add ops to save and restore all the variables.
             saver = tf.train.Saver()
@@ -218,7 +218,7 @@ def train_one_epoch(sess, ops, train_writer, batch):
         jittered_data = pf.jitter_point_cloud(rotated_data)
         batch_val = sess.run(batch)
 
-        if (IS_SHOW == 'True') & ((batch_val+1) % 5000 == 1):
+        if (IS_SHOW == 'True') & ((batch_val+1) % 3000 == 1):
             mlab.figure('points', fgcolor=(0, 0, 0), bgcolor=(1, 1, 1))
             mlab.points3d(10 * Data[0, :, 0], 10 * Data[0, :, 1], 10 * Data[0, :, 2], Seg_Label[0, :],
                           scale_factor=0.2, scale_mode='vector')
@@ -250,7 +250,7 @@ def train_one_epoch(sess, ops, train_writer, batch):
         real_seg_labels = np.argmax(real_seg, axis=-1)
         fake_seg_labels = np.argmax(fake_seg, axis=-1)
 
-        if (IS_SHOW == 'True') & ((batch_val+1) % 5000 == 1):
+        if (IS_SHOW == 'True') & ((batch_val+1) % 3000 == 1):
             mlab.figure('real_seg', fgcolor=(0, 0, 0), bgcolor=(1, 1, 1))
             mlab.points3d(10 * Data[0, :, 0], 10 * Data[0, :, 1], 10 * Data[0, :, 2], real_seg_labels[0, :],
                           scale_factor=0.2, scale_mode='vector')
