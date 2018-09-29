@@ -50,6 +50,7 @@ IS_TRANS = 'q_trans'
 IS_KEY = 'False'
 IS_STEP2 = 'False'
 
+
 MODEL = importlib.import_module(FLAGS.model)  # import network module
 LOG_DIR = os.path.join('../Logs', LOG_DIR)
 if not os.path.exists(LOG_DIR):
@@ -181,6 +182,7 @@ def train():
 
 
 def train_one_epoch(sess, ops, train_writer, batch):
+
     total_seen = 0
     loss_sum = 0
     shape_list = sp.get_file_list(DATA_DIR, '.h5')
