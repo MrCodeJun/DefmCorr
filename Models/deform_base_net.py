@@ -130,6 +130,7 @@ def points_laplace_coord(points, K=8, D=1):
 class DeformNet():
     def __init__(self, is_training, batch_size, point_num, dense_weight, is_trans, is_key):
         self.points = tf.placeholder(tf.float32, shape=(batch_size, point_num, 3), name='input')
+        self.gt_data =  tf.placeholder(tf.float32, shape=(batch_size, point_num, 3), name='gt_data')
         self.point_labels = tf.placeholder(tf.int32, shape=(batch_size, point_num), name='input_point_labels')
         self.category_labels = tf.placeholder(tf.int32, shape=(batch_size), name='category_label')
         self.is_training = is_training
@@ -159,8 +160,8 @@ class DeformNet():
 
 
         if is_trans is not 'no_trans':
-            self.points_deform_transpose = tf.matmul(self.points_deform, self.transform_matrix_transpose)
-            self.shape_loss = self.shape_loss(self.points, self.points_deform_transpose, dense_weight, k_n=8)
+            # self.points_deform_transpose = tf.matmul(self.points_deform, self.transform_matrix_transpose)
+            self.shape_loss = self.shape_loss(self.gt_data, self.points_deform, dense_weight, k_n=8)
         else:
             self.shape_loss = self.shape_loss(self.points_t, self.points_deform, dense_weight, k_n=8)
 

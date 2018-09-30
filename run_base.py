@@ -19,7 +19,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--densityWeight", type=float, default=1.0, help="density weight [default: 1.0]")
 parser.add_argument('--gpu', type=int, default=0, help='GPU to use [default: GPU 0]')
 parser.add_argument('--model', default='deform_base_net', help='Model name: deform_net [default: deform_net]')
-parser.add_argument('--log', default='log_deform_basenet', help='Log dir [default: log]')
+parser.add_argument('--log', default='log_deform_basenet2', help='Log dir [default: log]')
 parser.add_argument('--point_num', type=int, default=2048, help='Do not set the argument')
 parser.add_argument('--batch_size', type=int, default=16, help='Batch Size during training [default: 16]')
 parser.add_argument('--epoch', type=int, default=200, help='Epoch to run  [default: 200]')
@@ -48,7 +48,7 @@ MAX_EPOCH = FLAGS.epoch
 DATA_DIR = FLAGS.train_data
 IS_SHOW = FLAGS.is_visual
 
-IS_TRANS = 'q_trans'
+IS_TRANS = 'trans'
 IS_KEY = 'False'
 
 
@@ -139,6 +139,7 @@ def train():
         # print(variable_names)
 
         ops = {'input_shapes': network.points,
+               'gt_data':network.gt_data,
                'category_labels': network.category_labels,
                'input_shape_labels': network.point_labels,
                'template_shapes': network.temp_points,
@@ -211,6 +212,7 @@ def train_one_epoch(sess, ops, train_writer, batch):
         # rotated_data = pf.rotate_point_cloud(Data)
         # jittered_data = pf.jitter_point_cloud(rotated_data)
         jittered_data = pf.jitter_point_cloud(Data)
+        gt_data = Data
         batch_val = sess.run(batch)
 
 
@@ -227,6 +229,7 @@ def train_one_epoch(sess, ops, train_writer, batch):
             mlab.show()
 
         feed_dict = {ops['input_shapes']: jittered_data,
+                     ops['gt_data']: gt_data,
                      ops['category_labels']: Categroy_Label,
                      ops['input_shape_labels']: Seg_Label,
                      ops['template_shapes']: Temp,
