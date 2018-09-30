@@ -151,8 +151,8 @@ class DeformNet():
             self.points_feats, self.global_fts, self.points_t = self.point_feat_extract(self.points, 'netE',
                                                                                        self.is_training, self.is_trans)
 
-        self.feats_concat_temp = tf.concat([self.temp_points, self.points_feats], axis=-1, name='temp_and_feats')
-
+        self.global_fts_tile = tf.tile(tf.expand_dims(self.global_fts, axis=1), [1, point_num, 1])
+        self.feats_concat_temp = tf.concat([self.temp_points, self.global_fts_tile], axis=-1, name='temp_and_feats')
         self.points_deform = self.points_deform(self.feats_concat_temp, 'netD', self.is_training)
 
         self.category_pred = self.points_category(self.global_fts, 16, self.is_training, 'netCategory')
@@ -161,13 +161,8 @@ class DeformNet():
         if is_trans is not 'no_trans':
             self.points_deform_transpose = tf.matmul(self.points_deform, self.transform_matrix_transpose)
             self.shape_loss = self.shape_loss(self.points, self.points_deform_transpose, dense_weight, k_n=8)
-            self.lap_loss = self.laplacian_loss(self.temp_points, self.points_deform)
-            self.shape_loss = self.shape_loss + 0.2 * self.lap_loss
-
         else:
             self.shape_loss = self.shape_loss(self.points_t, self.points_deform, dense_weight, k_n=8)
-            self.lap_loss = self.laplacian_loss(self.temp_points, self.points_deform)
-            self.shape_loss = self.shape_loss + 0.2 * self.lap_loss
 
         if is_key is True:
             self.key_loss = self.key_points_loss(self.points_t, self.points_deform,
@@ -270,7 +265,6 @@ class DeformNet():
         loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=pred, labels=label)
         classify_loss = tf.reduce_mean(loss)
         return classify_loss
-
 
 
     def laplacian_loss(self, points_s, points_t):

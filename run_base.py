@@ -18,8 +18,8 @@ import pointfly as pf
 parser = argparse.ArgumentParser()
 parser.add_argument("--densityWeight", type=float, default=1.0, help="density weight [default: 1.0]")
 parser.add_argument('--gpu', type=int, default=0, help='GPU to use [default: GPU 0]')
-parser.add_argument('--model', default='deform_net2', help='Model name: deform_net [default: deform_net]')
-parser.add_argument('--log', default='log_deform_v1.0', help='Log dir [default: log]')
+parser.add_argument('--model', default='deform_base_net', help='Model name: deform_net [default: deform_net]')
+parser.add_argument('--log', default='log_deform_basenet', help='Log dir [default: log]')
 parser.add_argument('--point_num', type=int, default=2048, help='Do not set the argument')
 parser.add_argument('--batch_size', type=int, default=16, help='Batch Size during training [default: 16]')
 parser.add_argument('--epoch', type=int, default=200, help='Epoch to run  [default: 200]')
@@ -91,18 +91,18 @@ def train():
             if IS_KEY is True:
                 shape_loss = network.shape_loss
                 key_loss = network.key_points_loss
-                category_loss = network.category_loss
-                total_loss = 0.4*shape_loss + 0.3*key_loss + 0.3*category_loss
+                # category_loss = network.category_loss
+                total_loss = 0.4*shape_loss + 0.3*key_loss
             else:
-                category_loss = network.category_loss
+                # category_loss = network.category_loss
                 shape_loss = network.shape_loss
-                total_loss = 0.5*shape_loss + 0.5*category_loss
+                total_loss = shape_loss
 
             reg_loss = 0.00001*tf.losses.get_regularization_loss()
 
             tf.summary.scalar('loss/loss_total', total_loss, collections=['train'])
             tf.summary.scalar('loss/shape_loss', shape_loss, collections=['train'])
-            tf.summary.scalar('loss/category_loss', category_loss, collections=['train'])
+            # tf.summary.scalar('loss/category_loss', category_loss, collections=['train'])
 
             learning_rate = get_learning_rate(batch)
             tf.summary.scalar('learning_rate', learning_rate, collections=['train'])
@@ -168,12 +168,12 @@ def train():
 
         for epoch in range(MAX_EPOCH):
             log_string('**** EPOCH %03d ****' % (epoch))
-            train_one_epoch(sess, ops, train_writer)
+            train_one_epoch(sess, ops, train_writer, batch)
             if (epoch+1) % 5 == 0:
                 saver.save(sess, os.path.join(LOG_DIR, "model" + str(epoch + 1) + ".ckpt"))
 
 
-def train_one_epoch(sess, ops, train_writer):
+def train_one_epoch(sess, ops, train_writer, batch):
     total_seen = 0
     loss_sum = 0
     shape_list = sp.get_file_list(DATA_DIR, '.h5')
@@ -208,10 +208,13 @@ def train_one_epoch(sess, ops, train_writer):
         Categroy_Label = np.array(Categroy_Label)
         Temp = np.array(Temp)
 
-        rotated_data = pf.rotate_point_cloud(Data)
-        jittered_data = pf.jitter_point_cloud(rotated_data)
+        # rotated_data = pf.rotate_point_cloud(Data)
+        # jittered_data = pf.jitter_point_cloud(rotated_data)
+        jittered_data = pf.jitter_point_cloud(Data)
+        batch_val = sess.run(batch)
 
-        if (IS_SHOW == 'True') & ((total_seen/BATCH_SIZE+1) % 500000000 == 1):
+
+        if (IS_SHOW == 'True') & ((batch_val+1) % 4000== 1):
             mlab.figure('points', fgcolor=(0, 0, 0), bgcolor=(1, 1, 1))
             mlab.points3d(10 * Data[0, :, 0], 10 * Data[0, :, 1], 10 * Data[0, :, 2], Seg_Label[0, :],
                           scale_factor=0.2, scale_mode='vector')
@@ -236,7 +239,7 @@ def train_one_epoch(sess, ops, train_writer):
                                                             ops['morph_shapes']],
                                                             feed_dict=feed_dict)
 
-        if (IS_SHOW == 'True') & ((total_seen/BATCH_SIZE+1) % 500000000 == 1):
+        if (IS_SHOW == 'True') & ((batch_val+1) % 4000 == 1):
             mlab.figure('morph_shape', fgcolor=(0, 0, 0), bgcolor=(1, 1, 1))
             mlab.points3d(10 * morhp_shapes[0, :, 0], 10 * morhp_shapes[0, :, 1], 10 * morhp_shapes[0, :, 2], color=(0.7, 0.7, 0.7),
                           scale_factor=0.2, scale_mode='vector')
